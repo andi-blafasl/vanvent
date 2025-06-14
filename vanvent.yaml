@@ -1,0 +1,1234 @@
+esphome:
+  name: vanvent
+  on_boot:
+    - priority: -100.0
+      then:
+        - component.update: epaper
+
+# Throttle writing parameters to the internal flash memory to reduce ESP memory wear / degradation
+preferences:
+  flash_write_interval: 15min
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+#  level: INFO
+  level: DEBUG
+
+# Enable Home Assistant API
+#api:
+#  password: ""
+
+#ota:
+#  - platform: esphome
+#    password: ""
+
+web_server:
+  port: 80
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  # Disable the WiFi watchdog
+  reboot_timeout: 0s
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+#  ap:
+#    ssid: "Vanvent Fallback Hotspot"
+#    password: "EGEodDnZUa3r"
+
+#captive_portal:
+
+esp32_ble_tracker:
+
+spi:
+  clk_pin: GPIO13
+  mosi_pin: GPIO14
+
+i2c:
+  sda: GPIO21
+  scl: GPIO22
+  scan: true
+  #frequency: 400kHz
+  id: bus_a
+
+substitutions:
+  devicename: VanVent
+  font_xsmall: "13"
+  font_small: "16"
+  font_medium: "18"
+  font_large: "32"
+  icon_small: "15x15"
+  icon_medium: "20x20"
+  icon_large: "30x30"
+  mdi_small: "15"
+  mdi_medium: "20"
+  mdi_large: "30"
+
+globals:
+  - id: update_epaper
+    type: bool
+    initial_value: "true"
+  - id: in_temp_min
+    type: float
+    restore_value: no
+    initial_value: "500"
+  - id: in_temp_max
+    type: float
+    restore_value: no
+    initial_value: "-500"
+  - id: out_temp_min
+    type: float
+    restore_value: no
+    initial_value: "500"
+  - id: out_temp_max
+    type: float
+    restore_value: no
+    initial_value: "-500"
+
+font:
+  - file: 
+      type: gfonts
+      family: Source+Sans+3
+      weight: medium
+    id: sans_semi_s
+    size: ${font_small}
+    glyphs: [
+      0123456789,
+      (,),+,-,_,.,°,
+      "\u0020", # space
+      "\u002C", # ,
+      "\u0021", # !
+      "\u0022", # "
+      "\u0027", # '
+      ]
+  - file: 
+      type: gfonts
+      family: Source+Sans+3
+      weight: medium
+    id: sans_semi_m
+    size: ${font_medium}
+    glyphs: [
+      0123456789,
+      (,),+,-,_,.,°,
+      "\u0020", # space
+      "\u002C", # ,
+      "\u0021", # !
+      "\u0022", # "
+      "\u0027", # '
+      ]
+  - file: 
+      type: gfonts
+      family: Source+Sans+3
+      weight: medium
+    id: sans_semi_l
+    size: ${font_large}
+    glyphs: [
+      0123456789,
+      (,),+,-,_,.,°,
+      "\u0020", # space
+      "\u002C", # ,
+      "\u0021", # !
+      "\u0022", # "
+      "\u0027", # '
+      ]
+  - file:
+      type: gfonts
+      family: Courier+Prime
+      weight: regular
+    id: mono_bold_xs
+    size: ${font_xsmall}
+    glyphs: [
+      0123456789aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZäÄöÖüÜ,
+      (,),+,-,_,.,°,
+      "\u0020", # space
+      "\u0025", # %
+      "\u002C", # ,
+      "\u0021", # !
+      "\u0022", # "
+      "\u0027", # '
+      "\u003C", # <
+      "\u003E", # >
+      ]
+  - file: fonts/materialdesignicons-webfont.ttf
+    id: mdi_small
+    size: ${mdi_small}
+    glyphs: [
+      "\U000F0F54", # mdi:home-thermometer
+      "\U000F0F55", # mdi:home-thermometer-outline
+      "\U000F07C5", # mdi:ear-hearing
+      "\U000F0A45", # mdi:ear-hearing-off
+      "\U000F008E", # mdi:battery-outline
+      "\U000F007A", # mdi:battery-10
+      "\U000F007B", # mdi:battery-20
+      "\U000F007C", # mdi:battery-30
+      "\U000F007D", # mdi:battery-40
+      "\U000F007E", # mdi:battery-50
+      "\U000F007F", # mdi:battery-60
+      "\U000F0080", # mdi:battery-70
+      "\U000F0081", # mdi:battery-80
+      "\U000F0082", # mdi:battery-90
+      "\U000F0079", # mdi:battery
+      "\U000F125E", # mdi:battery-off-outline
+      "\U000F0504", # mdi:temperature-celsius
+      "\U000F03F0", # mdi:percent
+      "\U000F07E4", # mdi:molecule-co2
+      "\U000F1B5A", # mdi:weather-dust
+      #"\U000F12CC", # mdi:cloud-check-variant-outline
+      "\U000F04CE", # mdi:star
+      "\U000F04D2", # mdi:star-outline
+      ]
+  - file: fonts/materialdesignicons-webfont.ttf
+    id: mdi_medium
+    size: ${mdi_medium}
+    glyphs: [
+      "\U000F0210", # mdi:fan
+      "\U000F171D", # mdi:fan-auto
+      "\U000F081D", # mdi:fan-off
+      "\U000F11D4", # mdi:rv-truck
+      "\U000F0595", # mdi:weather-partly-cloudy
+      "\U000F0957", # mdi:cloud-search-outline
+      "\U000F0597", # mdi:weather-rainy
+      "\U000F0B7D", # mdi:cloud-download-outline
+      "\U000F0717", # mdi:snowflake
+      "\U000F04E2", # mdi:swap-vertical
+      ]
+  - file: fonts/materialdesignicons-webfont.ttf
+    id: mdi_large
+    size: ${mdi_large}
+    glyphs: [
+      "\U000F050F", # mdi:thermometer
+      ]
+
+display:
+  - platform: waveshare_epaper
+    id: epaper
+    cs_pin: GPIO15
+    dc_pin: GPIO27
+    busy_pin: GPIO25
+    reset_pin: GPIO26
+    model: 2.13inv3 # choose your display size here
+    rotation: 90
+    full_update_every: 600
+    update_interval: never
+    #auto_clear_enabled: false
+    reset_duration: 2ms # Defaults to 200ms. Setting this value to 2ms may resolve issues with newer e-Paper Driver modules (e.g. Rev 2.1).
+    pages:
+      - id: pg_main
+        lambda: |-
+          // info row
+          it.print(0, 1, id(mono_bold_xs), "Mode");
+          std::string f_mode;
+          auto fan_index = id(fan_mode).active_index();
+          if (fan_index.has_value()) {
+            switch (fan_index.value()){
+              case 0: //off
+                f_mode = "\U000F081D";
+                break;
+              case 1: // manual
+                f_mode = "\U000F0210";
+                break;
+              case 2: // auto
+                f_mode = "\U000F171D";
+                break;
+            }
+          } else {
+            f_mode = "";
+          }
+          it.printf(33, -2, id(mdi_medium), "%s", f_mode.c_str());
+          if(fan_index.value() == 2) {
+            if(id(fan_silent).state)
+              it.print(56, 0, id(mdi_small), "\U000F0A45");
+            if(id(fan_out_lock).state)
+              it.print(72, 0, id(mdi_small), "\U000F0F55");
+          }
+          if(fan_index.value() != 0) {
+            it.print(87, 1, id(mono_bold_xs), "RPM");
+            if(id(fan_speed).has_state()) {
+              it.printf(113, -4, id(sans_semi_s), "%04.0f", id(fan_speed).state);
+            } else {
+              it.print(113, -4, id(sans_semi_s), "----");
+            }
+          }
+          if(fan_index.value() >= 1) {
+            int fan_perc_dsp = (fan_index.value() == 2 ) ? id(the_fan).speed : id(fan_perc).state;
+            it.print(148, 1, id(mono_bold_xs), "%");
+            it.printf(159, -4, id(sans_semi_s), "%d", fan_perc_dsp);
+          }
+          it.print((250-(4*1)-(2*4)-(3*11)-(3*6)), 2, id(mono_bold_xs), "I");
+          it.print((250-(3*1)-(2*4)-(3*11)-(2*6)), 1, id(mdi_small), id(indoor_bat_icon).state.c_str());
+          it.print((250-(3*1)-(1*4)-(2*11)-(2*6)), 2, id(mono_bold_xs), "O");
+          it.print((250-(2*1)-(1*4)-(2*11)-(1*6)), 1, id(mdi_small), id(outdoor_bat_icon).state.c_str());
+          it.print((250-(2*1)-(0*4)-(1*11)-(1*6)), 2, id(mono_bold_xs), "F");
+          it.print((250-(1*1)-(0*4)-(1*11)-(0*6)), 1, id(mdi_small), id(fridge_bat_icon).state.c_str());
+          it.line(0, 19, 250, 19);
+          // icon column
+          it.print(-4, 36, id(mdi_large), "\U000F050F");
+          it.print(0, 66, id(mdi_medium), "\U000F0597");
+          // indoor column
+          it.print(38+7, 21, id(mdi_medium), "\U000F11D4");
+          if(id(indoor_temperature).has_state()) {
+            float in_temp_frac, in_temp_int;
+            in_temp_frac = modf(id(indoor_temperature).state, &in_temp_int);
+            std::string in_temp_frac_s = esphome::to_string(round(in_temp_frac*10)/10);	
+            it.printf(56+7, 76, id(sans_semi_l), TextAlign::BOTTOM_RIGHT, "%.0f", in_temp_int);
+            it.printf(56+7, 70, id(sans_semi_m), TextAlign::BOTTOM_LEFT, "%s", in_temp_frac_s.substr(1,2).c_str());
+          } else {
+            it.print(56+7, 76, id(sans_semi_l), TextAlign::BOTTOM_RIGHT, "--");
+            it.print(56+7, 70, id(sans_semi_m), TextAlign::BOTTOM_LEFT, ".-");
+          }
+          it.print(61+7, 38, id(mdi_small), "\U000F0504");
+          it.print(24+7, 68, id(mdi_small), "\U000F03F0");
+          if(id(indoor_humidity).has_state()) {
+            float in_hum_frac, in_hum_int;
+            in_hum_frac = modf(id(indoor_humidity).state, &in_hum_int);
+            std::string in_hum_frac_s = esphome::to_string(round(in_hum_frac*10)/10);	
+            it.printf(57+7, 89, id(sans_semi_m), TextAlign::BOTTOM_RIGHT, "%.0f", in_hum_int);
+            it.printf(58+7, 88, id(sans_semi_s), TextAlign::BOTTOM_LEFT, "%s", in_hum_frac_s.substr(1,2).c_str());
+          } else {
+            it.print(57+7, 89, id(sans_semi_m), TextAlign::BOTTOM_RIGHT, "--");
+            it.print(58+7, 88, id(sans_semi_s), TextAlign::BOTTOM_LEFT, ".-");
+          }
+          // indoor graph
+          //it.graph(3, 87, id(indoor_graph));
+          // min-max indor
+          it.print(0, 85, id(mdi_medium), "\U000F04E2");
+          it.print(15, 89, id(mono_bold_xs), "°c");
+          if(id(in_temp_max) > -500 ) {
+            it.printf(46, 85, id(mono_bold_xs), "%.1f", id(in_temp_max));
+          } else {
+            it.print(46, 85, id(mono_bold_xs), "--.-");
+          }
+          if(id(in_temp_min) < 500 ) {
+            it.printf(46, 95, id(mono_bold_xs), "%.1f", id(in_temp_min));
+          } else {
+            it.print(46, 95, id(mono_bold_xs), "--.-");
+          }
+          // outdoor column
+          it.print(38+79, 21, id(mdi_medium), "\U000F0595");
+          if(id(outdoor_temperature).has_state()) {
+            float out_temp_frac, out_temp_int;
+            out_temp_frac = modf(id(outdoor_temperature).state, &out_temp_int);
+            std::string out_temp_frac_s = esphome::to_string(round(out_temp_frac*10)/10);	
+            it.printf(56+79, 76, id(sans_semi_l), TextAlign::BOTTOM_RIGHT, "%.0f", out_temp_int);
+            it.printf(56+79, 70, id(sans_semi_m), TextAlign::BOTTOM_LEFT, "%s", out_temp_frac_s.substr(1,2).c_str());
+          } else {
+            it.print(56+79, 76, id(sans_semi_l), TextAlign::BOTTOM_RIGHT, "--");
+            it.print(56+79, 70, id(sans_semi_m), TextAlign::BOTTOM_LEFT, ".-");
+          }
+          it.print(61+79, 38, id(mdi_small), "\U000F0504");
+          it.print(24+79, 68, id(mdi_small), "\U000F03F0");
+          if(id(outdoor_humidity).has_state()) {
+            float out_hum_frac, out_hum_int;
+            out_hum_frac = modf(id(outdoor_humidity).state, &out_hum_int);
+            std::string out_hum_frac_s = esphome::to_string(round(out_hum_frac*10)/10);	
+            it.printf(57+79, 89, id(sans_semi_m), TextAlign::BOTTOM_RIGHT, "%.0f", out_hum_int);
+            it.printf(58+79, 88, id(sans_semi_s), TextAlign::BOTTOM_LEFT, "%s", out_hum_frac_s.substr(1,2).c_str());
+          } else {
+            it.print(57+79, 89, id(sans_semi_m), TextAlign::BOTTOM_RIGHT, "--");
+            it.print(58+79, 88, id(sans_semi_s), TextAlign::BOTTOM_LEFT, ".-");
+          }
+          // outdoor graph
+          //it.graph(86, 87, id(outdoor_graph));
+          if(id(out_temp_max) > -500 ) {
+            it.printf(39+80, 85, id(mono_bold_xs), "%.1f", id(out_temp_max));
+          } else {
+            it.print(39+80, 85, id(mono_bold_xs), "--.-");
+          }
+          if(id(out_temp_min) < 500 ) {
+            it.printf(39+80, 95, id(mono_bold_xs), "%.1f", id(out_temp_min));
+          } else {
+            it.print(39+80, 95, id(mono_bold_xs), "--.-");
+          }
+          // quality column
+          it.print(20+170, 21, id(mdi_medium), "\U000F0957");
+          it.print(0+170, 40, id(mdi_small), "\U000F07E4");
+          if(id(ens160_co2).has_state()) {
+            int ens160_co2_int = id(ens160_co2).state;
+            it.printf(55+170, 36, id(sans_semi_s), TextAlign::TOP_RIGHT, "%d", ens160_co2_int);
+          } else {
+            it.print(55+170, 36, id(sans_semi_s), TextAlign::TOP_RIGHT, "----");
+          }
+          //it.print(22+170, 36, id(sans_semi_s), "4545");
+          it.print(56+170, 41, id(mono_bold_xs), "ppm");
+          it.print(0+170, 56, id(mdi_small), "\U000F1B5A");
+          if(id(ens160_tvoc).has_state()) {
+            int ens160_tvoc_int = id(ens160_tvoc).state;
+            it.printf(55+170, 52, id(sans_semi_s), TextAlign::TOP_RIGHT, "%d", ens160_tvoc_int);
+          } else {
+            it.print(55+170, 52, id(sans_semi_s), TextAlign::TOP_RIGHT, "----");
+          }
+          //it.print(22+170, 52, id(sans_semi_s), "8080");
+          it.print(56+170, 57, id(mono_bold_xs), "ppb");
+          //it.print(0+170, 72, id(mdi_small), "\U000F12CC");
+          //it.print(18+170, 79, id(mono_bold_xs), "excelent");
+          // aqi stars
+          it.print(0+170, 72, id(mdi_small), id(ens160_aqi_stars).state.c_str());
+          // fridge
+          it.print(0, 105, id(mdi_medium), "\U000F0717");
+          if(id(fridge_temperature).has_state()) {
+            it.printf(24, 110, id(mono_bold_xs), "%.1f°c", id(fridge_temperature).state);
+          } else {
+            it.print(24, 110, id(mono_bold_xs), "--.-°c");
+          }
+          // air preasure
+          it.print(-3+83, 105, id(mdi_medium), "\U000F0B7D");
+          if(id(bme280_pressure).has_state()) {
+            it.printf(60+83, 104, id(sans_semi_s), TextAlign::TOP_RIGHT, "%.1f", id(bme280_pressure).state);
+          } else {
+            it.print(60+83, 104, id(sans_semi_s), TextAlign::TOP_RIGHT, "---.-");
+          }
+          it.print(62+83, 109, id(mono_bold_xs), TextAlign::TOP_LEFT, "hpa");
+          // air preasure graph
+          it.graph(170, 88, id(hpa_graph));
+
+graph:
+  #- id: indoor_graph
+  #  duration: 4h
+  #  #x_grid: 10min
+  #  #y_grid: 10.0     # degC/div
+  #  width: 79
+  #  height: 20
+  #  traces:
+  #    - sensor: indoor_temperature
+  #      line_type: SOLID
+  #      line_thickness: 2
+  #    - sensor: indoor_humidity
+  #      line_type: DOTTED
+  #      continuous: true
+  #      line_thickness: 2
+  #- id: outdoor_graph
+  #  duration: 4h
+  #  #x_grid: 10min
+  #  #y_grid: 10.0     # degC/div
+  #  width: 79
+  #  height: 20
+  #  traces:
+  #    - sensor: outdoor_temperature
+  #      line_type: SOLID
+  #      line_thickness: 2
+  #    - sensor: outdoor_humidity
+  #      line_type: DOTTED
+  #      continuous: true
+  #      line_thickness: 2
+  - id: hpa_graph
+    duration: 6h
+    #x_grid: 10min
+    #y_grid: 100.0     # degC/div
+    width: 80
+    height: 33
+    traces:
+      - sensor: bme280_pressure
+        line_type: solid
+        continuous: true
+        line_thickness: 2
+
+graphical_display_menu:
+  id: display_menu
+  display: epaper
+  font: mono_bold_xs
+  on_redraw:
+    then:
+      component.update: epaper
+  active: false
+  mode: rotary
+  items:
+    - type: select
+      text: 'Fan Mode'
+      select: fan_mode
+      immediate_edit: true
+    - type: number
+      text: 'manual Fan Speed %'
+      format: '%.0f'
+      number: fan_perc
+    - type: switch
+      text: 'Silent Mode'
+      on_text: 'on'
+      off_text: 'off'
+      switch: fan_silent
+      immediate_edit: true
+    - type: number
+      text: 'Fan Silent max %'
+      format: '%.0f'
+      number: fan_silent_perc
+    - type: switch
+      text: 'Outside Temp Lock'
+      on_text: 'on'
+      off_text: 'off'
+      switch: fan_out_lock
+      immediate_edit: true
+    - type: number
+      text: 'min Fan Speed %'
+      format: '%.0f'
+      number: fan_min_perc
+    - type: number
+      text: 'Fan start Temp °C'
+      format: '%.1f'
+      number: fan_start_temp
+    - type: number
+      text: 'Fan max Temp °C'
+      format: '%.1f'
+      number: fan_max_temp
+    #- type: back
+    #  text: 'Back'
+    - type: command
+      text: 'Exit'
+      on_value:
+        then:
+          - display_menu.hide: display_menu
+          - delay: 500ms
+          - component.update: epaper
+
+interval:
+  # check every 1sec if epaper needs update
+  - interval: 1sec
+    startup_delay: 10sec
+    then:
+      #- logger.log:
+      #    format: "fan_perc %d"
+      #    args: [ 'id(fan_perc)' ]
+      - if:
+          condition:
+            lambda: 'return id(update_epaper);'
+          then:
+            - logger.log: "updateing display"
+            - globals.set:
+                id: update_epaper
+                value: "false"
+            - component.update: epaper
+          #else:
+          #  - logger.log: "no display update"
+      #- if:
+      #    condition:
+      #      display_menu.is_active: display_menu
+      #    then:
+      #      - component.update: epaper
+  - interval: 30sec
+    startup_delay: 30sec
+    then:
+      - script.execute: set_fan
+      - logger.log: "setting fan speed on 30sec interval"
+
+# Sets the speed of the fan based on a linear calculation
+# between the high and low temperature thresholds and
+# the minimum specified fan speed
+script:
+  - id: set_fan
+    then:
+      - if:
+          condition:
+            lambda: |-
+              return id(fan_mode).state == "off";
+          then:
+            - fan.turn_off: the_fan
+            - logger.log: "turn fan off"
+      - if:
+          condition:
+            lambda: |-
+              return id(fan_mode).state == "manual";
+          then:
+            - fan.turn_on:
+                id: the_fan
+                speed: !lambda |-
+                  return id(fan_perc).state;
+            - logger.log:
+                format: "set the_fan to %f"
+                args: [ 'id(fan_perc).state' ]
+      - if:
+          condition:
+            lambda: |-
+              return id(fan_mode).state == "auto";
+          then:
+            - if:
+                condition:
+                  lambda: |-
+                    return id(indoor_temperature).state < id(fan_start_temp).state;
+                then:
+                  - fan.turn_off: the_fan
+                  - logger.log: "setting auto fan speed off -> temp below start temp"
+                else:
+                  - if:
+                      condition:
+                        lambda: |-
+                          return id(fan_out_lock).state && id(outdoor_temperature).state > id(indoor_temperature).state;
+                      then:
+                        - fan.turn_off: the_fan
+                        - logger.log: "setting auto fan speed off -> outdoor temp lock active"
+                      else:
+                        - fan.turn_on:
+                            id: the_fan
+                            speed: !lambda |-
+                              int max_perc = (id(fan_silent).state) ? (id(fan_silent_perc).state) : 100 ;
+                              int min_perc = (id(fan_silent).state) ? 0 : (id(fan_min_perc).state) ;
+                              if (id(indoor_temperature).state >= id(fan_max_temp).state) {
+                                // Over upper threshold, fan speed at maximum
+                                ESP_LOGD("Fan speed calc", "Temperature is above or equal to fan max temp so setting to max");
+                                return max_perc;
+                              }
+                              else {
+                                float calc_speed = ((max_perc-min_perc) / (id(fan_max_temp).state-id(fan_start_temp).state))*(id(indoor_temperature).state-id(fan_start_temp).state)+min_perc;
+                                ESP_LOGD("Fan speed calc", "calculated speed = %f", calc_speed);
+                                return calc_speed;
+                              }
+                        - logger.log: "setting auto fan speed to calculated value"
+
+sensor:
+  - platform: adc
+    pin: GPIO36
+    name: "${devicename} Battery voltage"
+    id: battery_voltage
+    icon: mdi:battery
+    entity_category: diagnostic
+    unit_of_measurement: "V"  
+    device_class: battery
+    attenuation: auto # without attenuation the adc is saturated (VBat/3 > 1.1 V)
+    filters:
+      - multiply: 3
+    update_interval: 30s
+    accuracy_decimals: 3
+  - platform: template
+    name: "${devicename} Battery Percentage"
+    id: battery_percentage
+    icon: mdi:battery
+    entity_category: diagnostic
+    unit_of_measurement: "%"  
+    device_class: battery
+    update_interval: 30s
+    accuracy_decimals: 0
+    lambda: |-
+      return ((id(battery_voltage).state-3) /1.2 * 100.00);
+    filters:
+      - delta: 1
+
+  - platform: bme280_i2c
+    temperature:
+      name: "BME280 Temperature"
+      id: bme280_temperature
+      filters:
+        - offset: -2.5
+        - throttle_average: 10s
+        - delta: 0.1
+      on_value:
+        #- component.update: epaper
+        - globals.set:
+            id: update_epaper
+            value: "true"
+    pressure:
+      name: "BME280 Pressure"
+      id: bme280_pressure
+      filters:
+        - throttle_average: 10s
+        - delta: 0.1
+      on_value:
+        #- component.update: epaper
+        - globals.set:
+            id: update_epaper
+            value: "true"
+    humidity:
+      name: "BME280 Relative Humidity"
+      id: bme280_humidity
+      filters:
+        - throttle_average: 10s
+        - delta: 0.1
+      on_value:
+        #- component.update: epaper
+        - globals.set:
+            id: update_epaper
+            value: "true"
+    address: 0x76
+    update_interval: 15s
+#  - platform: absolute_humidity
+#    name: "BME280 Absolute Humidity"
+#    temperature: bme280_temperature
+#    humidity: bme280_humidity
+#    filters:
+#      - throttle: 10s
+#      - delta: 0.1
+#  - platform: template
+#    name: "BME280 Dew Point"
+#    lambda: |-
+#      return (243.5*(log(id(bme280_humidity).state/100)+((17.67*id(bme280_temperature).state)/
+#      (243.5+id(bme280_temperature).state)))/(17.67-log(id(bme280_humidity).state/100)-
+#      ((17.67*id(bme280_temperature).state)/(243.5+id(bme280_temperature).state))));
+#    unit_of_measurement: °C
+#    icon: 'mdi:thermometer-alert'
+#    filters:
+#      - throttle: 10s
+#      - delta: 0.1
+
+  - platform: ens160_i2c
+    eco2:
+      name: "ENS160 eCO2"
+      id: "ens160_co2"
+      on_value:
+        #- component.update: epaper
+        - globals.set:
+            id: update_epaper
+            value: "true"
+    tvoc:
+      name: "ENS160 Total Volatile Organic Compounds"
+      id: "ens160_tvoc"
+      on_value:
+        #- component.update: epaper
+        - globals.set:
+            id: update_epaper
+            value: "true"
+    aqi:
+      name: "ENS160 Air Quality Index"
+      id: ens160_aqi
+      on_value:
+        #- component.update: epaper
+        - globals.set:
+            id: update_epaper
+            value: "true"
+    update_interval: 60s
+    address: 0x53
+    compensation:
+      temperature: bme280_temperature
+      humidity: bme280_humidity
+
+  - platform: inkbird_ibsth1_mini
+    mac_address: 49:25:01:15:04:1F # temp and humidity sensor
+    temperature:
+      name: "Indoor Temperature"
+      id: indoor_temperature
+      accuracy_decimals: 1
+      filters:
+        - throttle_average: 10s
+        - delta: 0.1
+      on_value:
+        - lambda: |-
+            if( x < id(in_temp_min))
+              id(in_temp_min) = x;
+            if( x > id(in_temp_max))
+              id(in_temp_max) = x;
+        #- component.update: epaper
+        - globals.set:
+            id: update_epaper
+            value: "true"
+        - script.execute: set_fan
+    humidity:
+      name: "Indoor Humidity"
+      id: indoor_humidity
+      accuracy_decimals: 1
+      filters:
+        - throttle_average: 10s
+        - delta: 0.1
+      on_value:
+        #- component.update: epaper
+        - globals.set:
+            id: update_epaper
+            value: "true"
+    battery_level:
+      name: "Indoor Battery Level"
+      id: indoor_battery
+      accuracy_decimals: 0
+      filters:
+        - throttle: 30s
+        - delta: 1
+  - platform: inkbird_ibsth1_mini
+    mac_address: 49:25:01:15:05:91 # temp and humidity sensor
+    temperature:
+      name: "Outdoor Temperature"
+      id: outdoor_temperature
+      accuracy_decimals: 1
+      filters:
+        - throttle_average: 10s
+        - delta: 0.1
+      on_value:
+        - lambda: |-
+            if( x < id(out_temp_min))
+              id(out_temp_min) = x;
+            if( x > id(out_temp_max))
+              id(out_temp_max) = x;
+        #- component.update: epaper
+        - globals.set:
+            id: update_epaper
+            value: "true"
+    humidity:
+      name: "Outdoor Humidity"
+      id: outdoor_humidity
+      accuracy_decimals: 1
+      filters:
+        - throttle_average: 10s
+        - delta: 0.1
+      on_value:
+        #- component.update: epaper
+        - globals.set:
+            id: update_epaper
+            value: "true"
+    battery_level:
+      name: "Ourdoor Battery Level"
+      id: outdoor_battery
+      accuracy_decimals: 0
+      filters:
+        - throttle: 30s
+        - delta: 1
+  - platform: inkbird_ibsth1_mini
+    mac_address: 49:24:12:21:00:DA # temp only sensor
+    temperature:
+      name: "Fridge Temperature"
+      id: fridge_temperature
+      accuracy_decimals: 1
+      filters:
+        - throttle_average: 10s
+        - delta: 0.1
+      on_value:
+        #- component.update: epaper
+        - globals.set:
+            id: update_epaper
+            value: "true"
+    battery_level:
+      name: "Fridge Battery Level"
+      id: fridge_battery
+      accuracy_decimals: 0
+      filters:
+        - throttle: 30s
+        - delta: 1
+
+  - platform: rotary_encoder
+    name: "Rotary Encoder"
+    pin_a: GPIO16
+    pin_b: GPIO17
+    restore_mode: ALWAYS_ZERO
+    filters:
+      - throttle: 10s
+    on_clockwise:
+      - if:
+          condition:
+            display_menu.is_active: display_menu
+          then:
+            - display_menu.down: display_menu
+          else:
+            - lambda: |-
+                if( id(fan_mode).state == "manual") {
+                  auto call = id(fan_perc).make_call();
+                  call.number_increment(false);
+                  call.perform();
+                }
+            #- number.increment: fan_perc
+            - delay: 100ms
+            - globals.set:
+                id: update_epaper
+                value: "true"
+            - component.update: epaper
+            - script.execute: set_fan
+    on_anticlockwise:
+      - if:
+          condition:
+            display_menu.is_active: display_menu
+          then:
+            - display_menu.up: display_menu
+          else:
+            - lambda: |-
+                if( id(fan_mode).state == "manual") {
+                  auto call = id(fan_perc).make_call();
+                  call.number_decrement(false);
+                  call.perform();
+                }
+            #- number.decrement: fan_perc
+            - delay: 100ms
+            - globals.set:
+                id: update_epaper
+                value: "true"
+            - component.update: epaper
+            - script.execute: set_fan
+
+  # Read the Tacho PIN and show measured RPM as a sensor (only with 4-pin PWM fans!)
+  # See instructions here: https://esphome.io/components/sensor/pulse_counter.html
+  - platform: pulse_counter
+    name: "Fan Speed"
+    id: fan_speed
+    pin: 
+      number: GPIO33   # Fan Tachometer
+      mode:
+        input: true
+        pullup: false
+    unit_of_measurement: 'RPM'
+    accuracy_decimals: 0
+    update_interval: 30s
+    count_mode:
+      rising_edge: INCREMENT
+      falling_edge: DISABLE
+    filters:
+      - multiply: 0.5  # Depending on how many pulses the fan sends per round - should be 0.5 or 1 - try...
+    on_value:
+      #- component.update: epaper
+      - globals.set:
+          id: update_epaper
+          value: "true"
+
+binary_sensor:
+  - platform: gpio
+    name: "${devicename} button"
+    pin:
+      number: GPIO12
+      inverted: true # user button pull IO12 to GND
+      mode:          # pin as input and enable pull up
+        input: true
+        pullup: true
+    filters:
+      - delayed_on_off: 20ms
+    on_multi_click:
+      - timing:
+          - ON for at most 1s
+          - OFF for at most 1s
+          - ON for at most 1s
+          - OFF for at least 0.2s
+        then:
+          - display.page.show_next: epaper
+          - component.update: epaper
+          - logger.log: "Double Clicked"
+      - timing:
+          #- ON for 1s to 2s
+          #- OFF for at least 0.5s
+          - ON for at least 2s
+        then:
+          #- logger.log: "Single Long Clicked"
+          - globals.set:
+              id: in_temp_min
+              value: "500"
+          - globals.set:
+              id: in_temp_max
+              value: "-500"
+          - globals.set:
+              id: out_temp_min
+              value: "500"
+          - globals.set:
+              id: out_temp_max
+              value: "-500"
+          - component.update: epaper
+      - timing:
+          - ON for at most 1s
+          - OFF for at least 0.5s
+        then:
+          #- logger.log: "Single Short Clicked"  
+          - if:
+              condition:
+                display_menu.is_active: display_menu
+              then:
+                - display_menu.hide: display_menu
+                - delay: 500ms
+                - component.update: epaper
+              else:
+                - switch.toggle: fan_silent
+                - delay: 50ms
+                - script.execute: set_fan
+                - globals.set:
+                    id: update_epaper
+                    value: "true"
+                - component.update: epaper
+  - platform: gpio
+    name: "Rotary button"
+    pin:
+      number: GPIO18
+      inverted: true # user button pull IO12 to GND
+      mode:          # pin as input and enable pull up
+        input: true
+        pullup: true
+    filters:
+      - delayed_on_off: 20ms
+    on_multi_click:
+      - timing:
+          - ON for at most 1s
+          - OFF for at most 1s
+          - ON for at most 1s
+          - OFF for at least 0.2s
+        then:
+          - logger.log: "Double Clicked"
+      - timing:
+          #- ON for 1s to 2s
+          #- OFF for at least 0.5s
+          - ON for at least 2s
+        then:
+          #- logger.log: "Single Long Clicked"
+          - display_menu.show: display_menu
+      - timing:
+          - ON for at most 1s
+          - OFF for at least 0.5s
+        then:
+          #- logger.log: "Single Short Clicked"  
+          - if:
+              condition:
+                display_menu.is_active: display_menu
+              then:
+                - display_menu.enter: display_menu
+              else:
+                #- lambda: |-
+                #    if( id(fan_mode) < 2) {
+                #      id(fan_mode) += 1;
+                #    } else {
+                #      id(fan_mode) = 0;
+                #    }
+                - select.next:
+                    id: fan_mode
+                    cycle: true
+                - delay: 50ms
+                - script.execute: set_fan
+                - globals.set:
+                    id: update_epaper
+                    value: "true"
+                - component.update: epaper
+
+output:
+  # Wire this pin (32) into the PWM pin of your 12v fan
+  # ledc is the name of the pwm output system on an esp32
+  - platform: ledc
+    id: fan_speed_pwm
+    pin: GPIO32
+    # 25KHz is standard PC fan frequency, minimises buzzing
+    frequency: "25000 Hz" 
+    min_power: 1%
+    max_power: 100%
+    # At 0, actually turn it off, otherwise the power keeps going.
+    zero_means_zero: true
+
+text_sensor:
+  - platform: template
+    name: "Local Battery Icon"
+    id: local_bat_icon
+    lambda: |-
+      if( id(battery_percentage).has_state() ) {
+        if( (int) (id(battery_percentage).state) >= 98)
+          return {"\U000F0079"};
+        if( (int) (id(battery_percentage).state) > 90)
+          return {"\U000F0082"};
+        if( (int) (id(battery_percentage).state) > 80)
+          return {"\U000F0081"};
+        if( (int) (id(battery_percentage).state) > 70)
+          return {"\U000F0080"};
+        if( (int) (id(battery_percentage).state) > 60)
+          return {"\U000F007F"};
+        if( (int) (id(battery_percentage).state) > 50)
+          return {"\U000F007E"};
+        if( (int) (id(battery_percentage).state) > 40)
+          return {"\U000F007D"};
+        if( (int) (id(battery_percentage).state) > 30)
+          return {"\U000F007C"};
+        if( (int) (id(battery_percentage).state) > 20)
+          return {"\U000F007B"};
+        if( (int) (id(battery_percentage).state) > 10)
+          return {"\U000F007A"};
+        if( (int) (id(battery_percentage).state) <= 10)
+          return {"\U000F008E"};
+        return {"\U000F125E"};
+      } else {
+        return {"\U000F125E"};
+      }
+    on_value:
+      - globals.set:
+          id: update_epaper
+          value: "true"
+  - platform: template
+    name: "Indoor Battery Icon"
+    id: indoor_bat_icon
+    lambda: |-
+      if( id(indoor_battery).has_state() ) {
+        if( (int) (id(indoor_battery).state) >= 98)
+          return {"\U000F0079"};
+        if( (int) (id(indoor_battery).state) > 90)
+          return {"\U000F0082"};
+        if( (int) (id(indoor_battery).state) > 80)
+          return {"\U000F0081"};
+        if( (int) (id(indoor_battery).state) > 70)
+          return {"\U000F0080"};
+        if( (int) (id(indoor_battery).state) > 60)
+          return {"\U000F007F"};
+        if( (int) (id(indoor_battery).state) > 50)
+          return {"\U000F007E"};
+        if( (int) (id(indoor_battery).state) > 40)
+          return {"\U000F007D"};
+        if( (int) (id(indoor_battery).state) > 30)
+          return {"\U000F007C"};
+        if( (int) (id(indoor_battery).state) > 20)
+          return {"\U000F007B"};
+        if( (int) (id(indoor_battery).state) > 10)
+          return {"\U000F007A"};
+        if( (int) (id(indoor_battery).state) <= 10)
+          return {"\U000F008E"};
+        return {"\U000F125E"};
+      } else {
+        return {"\U000F125E"};
+      }
+    on_value:
+      - globals.set:
+          id: update_epaper
+          value: "true"
+  - platform: template
+    name: "Outdoor Battery Icon"
+    id: outdoor_bat_icon
+    lambda: |-
+      if( id(outdoor_battery).has_state() ) {
+        if( (int) (id(outdoor_battery).state) >= 98)
+          return {"\U000F0079"};
+        if( (int) (id(outdoor_battery).state) > 90)
+          return {"\U000F0082"};
+        if( (int) (id(outdoor_battery).state) > 80)
+          return {"\U000F0081"};
+        if( (int) (id(outdoor_battery).state) > 70)
+          return {"\U000F0080"};
+        if( (int) (id(outdoor_battery).state) > 60)
+          return {"\U000F007F"};
+        if( (int) (id(outdoor_battery).state) > 50)
+          return {"\U000F007E"};
+        if( (int) (id(outdoor_battery).state) > 40)
+          return {"\U000F007D"};
+        if( (int) (id(outdoor_battery).state) > 30)
+          return {"\U000F007C"};
+        if( (int) (id(outdoor_battery).state) > 20)
+          return {"\U000F007B"};
+        if( (int) (id(outdoor_battery).state) > 10)
+          return {"\U000F007A"};
+        if( (int) (id(outdoor_battery).state) <= 10)
+          return {"\U000F008E"};
+        return {"\U000F125E"};
+      } else {
+        return {"\U000F125E"};
+      }
+    on_value:
+      - globals.set:
+          id: update_epaper
+          value: "true"
+  - platform: template
+    name: "Fridge Battery Icon"
+    id: fridge_bat_icon
+    lambda: |-
+      if( id(fridge_battery).has_state() ) {
+        if( (int) (id(fridge_battery).state) >= 98)
+          return {"\U000F0079"};
+        if( (int) (id(fridge_battery).state) > 90)
+          return {"\U000F0082"};
+        if( (int) (id(fridge_battery).state) > 80)
+          return {"\U000F0081"};
+        if( (int) (id(fridge_battery).state) > 70)
+          return {"\U000F0080"};
+        if( (int) (id(fridge_battery).state) > 60)
+          return {"\U000F007F"};
+        if( (int) (id(fridge_battery).state) > 50)
+          return {"\U000F007E"};
+        if( (int) (id(fridge_battery).state) > 40)
+          return {"\U000F007D"};
+        if( (int) (id(fridge_battery).state) > 30)
+          return {"\U000F007C"};
+        if( (int) (id(fridge_battery).state) > 20)
+          return {"\U000F007B"};
+        if( (int) (id(fridge_battery).state) > 10)
+          return {"\U000F007A"};
+        if( (int) (id(fridge_battery).state) <= 10)
+          return {"\U000F008E"};
+        return {"\U000F125E"};
+      } else {
+        return {"\U000F125E"};
+      }
+    on_value:
+      - globals.set:
+          id: update_epaper
+          value: "true"
+  - platform: template
+    name: "ENS160 Air Quality Rating"
+    id: ens160_aqi_stars
+    lambda: |-
+      switch ( (int) (id(ens160_aqi).state) ) {
+        case 1: return {"\U000F04CE\U000F04CE\U000F04CE\U000F04CE\U000F04CE"};
+        case 2: return {"\U000F04CE\U000F04CE\U000F04CE\U000F04CE\U000F04D2"};
+        case 3: return {"\U000F04CE\U000F04CE\U000F04CE\U000F04D2\U000F04D2"};
+        case 4: return {"\U000F04CE\U000F04CE\U000F04D2\U000F04D2\U000F04D2"};
+        case 5: return {"\U000F04CE\U000F04D2\U000F04D2\U000F04D2\U000F04D2" };
+        default: return {"\U000F04D2\U000F04D2\U000F04D2\U000F04D2\U000F04D2" };
+      }
+    on_value:
+      - globals.set:
+          id: update_epaper
+          value: "true"
+
+select:
+  - platform: template
+    name: "Fan Mode"
+    id: "fan_mode"
+    optimistic: true
+    options:
+      - "off"
+      - manual
+      - auto
+      #- dehumid
+    initial_option: "off"
+
+switch:
+  - platform: template
+    name: "Fan Outdoor Temp lock"
+    id: fan_out_lock
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+  - platform: template
+    id: fan_silent
+    optimistic: true
+    restore_mode: ALWAYS_ON
+
+# The actual fan entity presented to Home Assistant
+fan:
+  - platform: speed
+    output: fan_speed_pwm
+    name: "The Fan"
+    id: "the_fan"
+
+number:
+  - platform: template
+    name: "Fan Speed Percentage"
+    id: fan_perc
+    unit_of_measurement: "%"
+    optimistic: true
+    step: 1
+    min_value: 0
+    max_value: 100
+    initial_value: "15"
+    restore_value: true
+  - platform: template
+    name: "Fan Speed Silent max"
+    id: fan_silent_perc
+    unit_of_measurement: "%"
+    optimistic: true
+    step: 1
+    min_value: 0
+    max_value: 100
+    initial_value: "55"
+    restore_value: true
+  - platform: template
+    name: "Fan Speed min"
+    id: fan_min_perc
+    unit_of_measurement: "%"
+    optimistic: true
+    step: 1
+    min_value: 0
+    max_value: 100
+    initial_value: "10"
+    restore_value: true
+  - platform: template
+    name: "Fan start Temp"
+    id: fan_start_temp
+    unit_of_measurement: "°C"
+    optimistic: true
+    step: 0.5
+    min_value: -10
+    max_value: 50
+    initial_value: "21"
+    restore_value: true
+  - platform: template
+    name: "Fan max Temp"
+    id: fan_max_temp
+    unit_of_measurement: "°C"
+    optimistic: true
+    step: 0.5
+    min_value: -15
+    max_value: 55
+    initial_value: "35"
+    restore_value: true
+
+button:
+#  - platform: safe_mode
+#    name: "${devicename} Restart (Safe Mode)"
+  - platform: restart
+    name: "${devicename} Restart"
