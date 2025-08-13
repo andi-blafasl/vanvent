@@ -12,7 +12,7 @@ preferences:
 esp32:
   board: esp32dev
   framework:
-    type: arduino
+    type: esp-idf
 
 # Enable logging
 logger:
@@ -29,10 +29,21 @@ logger:
 
 web_server:
   port: 80
+  version: 3
+  sorting_groups:
+    - id: srgr_status
+      name: "Status Information"
+      sorting_weight: 10
+    - id: srgr_settings
+      name: "Fan settings"
+      sorting_weight: 20
 
 wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
+  networks:
+    - ssid: !secret wifi_ssid_home
+      password: !secret wifi_password_home
+    - ssid: !secret wifi_ssid_camper
+      password: !secret wifi_password_camper
   # Disable the WiFi watchdog
   reboot_timeout: 0s
 
@@ -272,7 +283,7 @@ display:
           // indoor column
           it.print(38+7, 21, id(mdi_medium), "\U000F11D4");
           if(id(indoor_temperature).has_state()) {
-            float in_temp_frac, in_temp_int;
+            double in_temp_frac, in_temp_int;
             in_temp_frac = modf(id(indoor_temperature).state, &in_temp_int);
             std::string in_temp_frac_s = esphome::to_string(round(in_temp_frac*10)/10);	
             it.printf(56+7, 76, id(sans_semi_l), TextAlign::BOTTOM_RIGHT, "%.0f", in_temp_int);
@@ -284,7 +295,7 @@ display:
           it.print(61+7, 38, id(mdi_small), "\U000F0504");
           it.print(24+7, 68, id(mdi_small), "\U000F03F0");
           if(id(indoor_humidity).has_state()) {
-            float in_hum_frac, in_hum_int;
+            double in_hum_frac, in_hum_int;
             in_hum_frac = modf(id(indoor_humidity).state, &in_hum_int);
             std::string in_hum_frac_s = esphome::to_string(round(in_hum_frac*10)/10);	
             it.printf(57+7, 89, id(sans_semi_m), TextAlign::BOTTOM_RIGHT, "%.0f", in_hum_int);
@@ -311,7 +322,7 @@ display:
           // outdoor column
           it.print(38+79, 21, id(mdi_medium), "\U000F0595");
           if(id(outdoor_temperature).has_state()) {
-            float out_temp_frac, out_temp_int;
+            double out_temp_frac, out_temp_int;
             out_temp_frac = modf(id(outdoor_temperature).state, &out_temp_int);
             std::string out_temp_frac_s = esphome::to_string(round(out_temp_frac*10)/10);	
             it.printf(56+79, 76, id(sans_semi_l), TextAlign::BOTTOM_RIGHT, "%.0f", out_temp_int);
@@ -323,7 +334,7 @@ display:
           it.print(61+79, 38, id(mdi_small), "\U000F0504");
           it.print(24+79, 68, id(mdi_small), "\U000F03F0");
           if(id(outdoor_humidity).has_state()) {
-            float out_hum_frac, out_hum_int;
+            double out_hum_frac, out_hum_int;
             out_hum_frac = modf(id(outdoor_humidity).state, &out_hum_int);
             std::string out_hum_frac_s = esphome::to_string(round(out_hum_frac*10)/10);	
             it.printf(57+79, 89, id(sans_semi_m), TextAlign::BOTTOM_RIGHT, "%.0f", out_hum_int);
@@ -590,6 +601,8 @@ sensor:
       - multiply: 3
     update_interval: 30s
     accuracy_decimals: 3
+    web_server:
+      sorting_group_id: srgr_status
   - platform: template
     name: "${devicename} Battery Percentage"
     id: battery_percentage
@@ -603,6 +616,8 @@ sensor:
       return ((id(battery_voltage).state-3) /1.2 * 100.00);
     filters:
       - delta: 1
+    web_server:
+      sorting_group_id: srgr_status
 
   - platform: bme280_i2c
     temperature:
@@ -617,6 +632,8 @@ sensor:
         - globals.set:
             id: update_epaper
             value: "true"
+      web_server:
+        sorting_group_id: srgr_status
     pressure:
       name: "BME280 Pressure"
       id: bme280_pressure
@@ -628,6 +645,8 @@ sensor:
         - globals.set:
             id: update_epaper
             value: "true"
+      web_server:
+        sorting_group_id: srgr_status
     humidity:
       name: "BME280 Relative Humidity"
       id: bme280_humidity
@@ -639,6 +658,8 @@ sensor:
         - globals.set:
             id: update_epaper
             value: "true"
+      web_server:
+        sorting_group_id: srgr_status
     address: 0x76
     update_interval: 15s
 #  - platform: absolute_humidity
